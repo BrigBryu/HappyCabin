@@ -1,5 +1,6 @@
 package com.BrigBryu.HappyCabin;
 
+import com.BrigBryu.HappyCabin.helper.DynamicLabel;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -14,9 +15,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-
-import static jdk.jfr.internal.instrument.JDKEvents.remove;
 
 public class HappyCabin extends ApplicationAdapter {
     private Stage stage;
@@ -45,8 +45,8 @@ public class HappyCabin extends ApplicationAdapter {
         // Load the skin
         skin = new Skin(Gdx.files.internal("simpleUISkin.json"));
 
-//Welcome to Happy Cabin. This is my first time building anything that has much of a user interface. I hope you enjoy it! <3
-        Label titleLabel = new Label("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", skin); //42 height
+// This is my first time building anything that use user interface so heavily. I hope you enjoy it! <3
+        Label titleLabel = new Label("Welcome to Happy Cabin.", skin); //42 height
         System.out.println(titleLabel.getHeight());
         titleLabel.setPosition(X_MENU_OFFSET, TOP_OF_MENU);
 
@@ -93,44 +93,123 @@ public class HappyCabin extends ApplicationAdapter {
         skin.dispose();
     }
 
-    public void presentLabels(List<String> messages){
-
+    //TODO
+    void processChoice(String question, String choice){
+        System.out.println("Answered " + choice + " to " + question);
     }
 
-    public List<String> makeLabelText(String message){
-        String[] words = message.split(" ");
-        final int maxCharacters = 80;
-        int sum = 0;
-        int lastWordToInclude = -1;
-        for(int i = 0; i < words.length; i++) {
-            sum += words[i].length();
-            if(sum > maxCharacters) {
-                lastWordToInclude = i - 1;
-                break;
-            }
-        }
+    /**
+     * gets question and answers returns answer then passes question and choice to processChoice
+     * @param choices to question
+     * @param question that gets answered
+     */
+    public void askChoice(List<String> choices, String question) {
+        DynamicLabel titleLabel = new DynamicLabel(question, skin);
+        titleLabel.setPosition(X_MENU_OFFSET, TOP_OF_MENU);
+        stage.addActor(titleLabel);
 
-        if(lastWordToInclude == -1) { //No overflow
-//            ArrayList<DynamicLabel> list = new ArrayList<>();
-//            list.add(new DynamicLabel(message, skin));
-            ArrayList<String> list = new ArrayList<>();
-            list.add(message);
-            return list;
-        } else { //Has overflow
-            StringBuilder shortenedMessage = new StringBuilder();
-            StringBuilder leftOverMessage = new StringBuilder();
-            ArrayList<String> list = new ArrayList<>();
-            for(int i = 0; i < message.length(); i++) {
-                if(i < lastWordToInclude) {
-                    shortenedMessage.append(words[i]);
+        ArrayList<TextButton> buttonList = new ArrayList<>();
+        for (int i = 0; i < choices.size(); i++) {
+            TextButton button = new TextButton(choices.get(i), skin);
+            button.setPosition(X_MENU_OFFSET, TOP_OF_MENU - ((Y_MENU_OFFSET + HEIGHT_OF_LABEL) * (i + 1)));
+            button.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    stage.getActors().removeValue(titleLabel, true);
+                    for (TextButton button : buttonList) {
+                        stage.getActors().removeValue(button, true);
+                    }
+                    processChoice(question, button.getLabel().getText().toString());
+                }
+            });
+            buttonList.add(button);
+            stage.addActor(button);
+        }
+    }
+
+    /**
+     * Presents a message in a DynamicLabel that updates to different messages as the TextButton is pressed
+     * @param messages
+     */
+    public void presentLabels(List<String> messages) {
+        Iterator<String> messageIterator = messages.iterator();
+        DynamicLabel titleLabel = new DynamicLabel(messageIterator.next(), skin);
+        titleLabel.setPosition(X_MENU_OFFSET, TOP_OF_MENU);
+        stage.addActor(titleLabel);
+
+        TextButton continueButton = new TextButton("Continue...", skin);
+        continueButton.setPosition(X_MENU_OFFSET, TOP_OF_MENU - HEIGHT_OF_LABEL - Y_MENU_OFFSET);
+        stage.addActor(continueButton);
+
+        continueButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (messageIterator.hasNext()) {
+                    titleLabel.setMessage(messageIterator.next());
                 } else {
-                    leftOverMessage.append(words[i]);
+                    stage.getActors().removeValue(titleLabel, true);
+                    stage.getActors().removeValue(continueButton, true);
                 }
             }
-            list.add(shortenedMessage.toString());
-            //list.add(new DynamicLabel(shortenedMessage.toString(), skin));
-            list.addAll(makeLabelText(leftOverMessage.toString()));
-            return list;
-        }
+        });
     }
+
+    public List<String> makeLabelText(String message) {
+        String[] words = message.split(" ");
+        final int maxCharacters = 80;
+        List<String> result = new ArrayList<>();
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : words) {
+            if (currentLine.length() + word.length() + 1 > maxCharacters) {
+                result.add(currentLine.toString());
+                currentLine = new StringBuilder();
+            }
+            if (currentLine.length() > 0) {
+                currentLine.append(" ");
+            }
+            currentLine.append(word);
+        }
+        if (currentLine.length() > 0) {
+            result.add(currentLine.toString());
+        }
+        return result;
+    }
+
+//    public List<String> makeLabelText(String message){
+//        String[] words = message.split(" ");
+//        final int maxCharacters = 80;
+//        int sum = 0;
+//        int lastWordToInclude = -1;
+//        for(int i = 0; i < words.length; i++) {
+//            sum += words[i].length();
+//            if(sum > maxCharacters) {
+//                lastWordToInclude = i - 1;
+//                break;
+//            }
+//        }
+//
+//        if(lastWordToInclude == -1) { //No overflow
+////            ArrayList<DynamicLabel> list = new ArrayList<>();
+////            list.add(new DynamicLabel(message, skin));
+//            ArrayList<String> list = new ArrayList<>();
+//            list.add(message);
+//            return list;
+//        } else { //Has overflow
+//            StringBuilder shortenedMessage = new StringBuilder();
+//            StringBuilder leftOverMessage = new StringBuilder();
+//            ArrayList<String> list = new ArrayList<>();
+//            for(int i = 0; i < message.length(); i++) {
+//                if(i < lastWordToInclude) {
+//                    shortenedMessage.append(words[i]);
+//                } else {
+//                    leftOverMessage.append(words[i]);
+//                }
+//            }
+//            list.add(shortenedMessage.toString());
+//            //list.add(new DynamicLabel(shortenedMessage.toString(), skin));
+//            list.addAll(makeLabelText(leftOverMessage.toString()));
+//            return list;
+//        }
+//    }
 }
