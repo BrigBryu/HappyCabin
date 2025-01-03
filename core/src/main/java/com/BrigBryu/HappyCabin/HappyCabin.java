@@ -1,7 +1,9 @@
 package com.BrigBryu.HappyCabin;
 
 import com.BrigBryu.HappyCabin.helper.DynamicLabel;
+import com.BrigBryu.HappyCabin.storyHelper.StoryPresenter;
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -18,16 +20,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class HappyCabin extends ApplicationAdapter {
+public class HappyCabin extends Game {
     private Stage stage;
     private Skin skin;
     private SpriteBatch batch;
-    final private int SCREEN_WIDTH =  1280;
-    final private int SCREEN_HEIGHT = 960;
-    final private int HEIGHT_OF_LABEL = 42;
+    public static final int SCREEN_WIDTH =  1280;
+    public final static int SCREEN_HEIGHT = 960;
+    final public static int HEIGHT_OF_LABEL = 42;
     final float X_MENU_OFFSET = 50;
     final float Y_MENU_OFFSET = 20;
-    final private int BOTTOM_OF_PICTURE_AREA = 400;//SCREEN_HEIGHT/3;
+    private final int BOTTOM_OF_PICTURE_AREA = 400;//SCREEN_HEIGHT/3;
     final float TOP_OF_MENU = BOTTOM_OF_PICTURE_AREA - HEIGHT_OF_LABEL - Y_MENU_OFFSET;
     private Texture treeLoadingScreen;
 
@@ -40,7 +42,7 @@ public class HappyCabin extends ApplicationAdapter {
         Gdx.input.setInputProcessor(stage);
 
         //textures
-        treeLoadingScreen = new Texture(Gdx.files.internal("pictures/treeAndMountain.jpg"));
+        treeLoadingScreen = new Texture(Gdx.files.internal("pictures/freeSimpleMountainBackground.png"));
         batch = new SpriteBatch();
         // Load the skin
         skin = new Skin(Gdx.files.internal("simpleUISkin.json"));
@@ -60,6 +62,7 @@ public class HappyCabin extends ApplicationAdapter {
                 renderStartScreen = false;
                 stage.getActors().removeValue(titleLabel, true);
                 stage.getActors().removeValue(startButton, true);
+                setStoryPresenterScreen();
             }
         });
 
@@ -67,18 +70,26 @@ public class HappyCabin extends ApplicationAdapter {
         stage.addActor(startButton);
     }
 
+    private void setStoryPresenterScreen() {
+        setScreen(new StoryPresenter(this, stage, batch, treeLoadingScreen));
+    }
+
     @Override
     public void render() {
         // Clear the screen
-        ScreenUtils.clear(0.109f, 0.166f, 0.209f, 1f);
-        batch.begin();
         if(renderStartScreen) {
+
+            ScreenUtils.clear(0.109f, 0.166f, 0.209f, 1f);
+            batch.begin();
             batch.draw(treeLoadingScreen, (SCREEN_WIDTH - treeLoadingScreen.getWidth()) / 2, BOTTOM_OF_PICTURE_AREA);
+
+            batch.end();
+            // Render the stage
+            stage.act();
+            stage.draw();
+        } else {
+            super.render();
         }
-        batch.end();
-        // Render the stage
-        stage.act();
-        stage.draw();
     }
 
     @Override
@@ -176,6 +187,9 @@ public class HappyCabin extends ApplicationAdapter {
         return result;
     }
 
+    public Skin getSkin(){
+        return skin;
+    }
 //    public List<String> makeLabelText(String message){
 //        String[] words = message.split(" ");
 //        final int maxCharacters = 80;
